@@ -15,19 +15,8 @@ void LOG::game_log(const char *format, ...){
 
 void LOG::game_vlog(const char* format, va_list arg) {
 #ifdef LOG_ENABLED
-    static bool clear_file = true;
     vprintf(format, arg);
     printf("\n");
-    /*
-    // Write log to file for later debugging.
-    FILE* pFile = fopen("log.txt", clear_file ? "w" : "a");
-    if (pFile) {
-        vfprintf(pFile, format, arg);
-        fprintf(pFile, "\n");
-        fclose(pFile);
-    }
-     */
-    clear_file = false;
 #endif
 }
 

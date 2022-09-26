@@ -1,27 +1,38 @@
-#ifndef _PLAYER_HPP
-#define _PLAYER_HPP
-
-#include "object.hpp"
+#ifndef _CAR_HPP
+#define _CAR_HPP
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_image.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
+#include "../utils/log.hpp"
+#include "../utils/imageProcess.hpp"
 #include <string>
+#include <iostream>
 
+extern const int scale;
+extern const int width;
+extern const int height;
+extern const int space_width;
+extern const int space_height;
+extern const int upper_space;
+extern const int left_space;
+extern const int word_space;
 
-class Player : public Object{
+class Car{
 	public:
-		Player(float _x, float _y, float _speedX, float _speedy, std::string path, int w, int h);
-		virtual bool update() override;
+        ALLEGRO_BITMAP *img;
+        float x;
+        float y;
+        float speedX;
+        float speedY;
+        float angle;
+        std::string ID;
+		Car(float _x, float _y, std::string ID, std::string path, int w, int h);
+    Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img);
+    ~Car();
+    bool update() ;
     
-        int hp; // between 0 and 100. if hp becomes 0 then the player loses.
-        int bullet_power; // if your bullet hit your opponent, then your opponent's hp will decrease by bullet_power.
-        int exp; // between 0 and 100. if your bullet hit an asteroid then exp += 20. if exp == 100 then bullet_power += 1.
-        int energy; // between 0 and 100. shooting a bullet will decrease by 20.
-		int bullet_cool; // between 0 and 5. you can shoot only if bullet_cool == 0.
-        // You can check hackmd and other codes for more information.
-    
-        int potion[7]; // storing the states about the buff of the potions.
-        // potion[3]: between 0 and 500. if (potion[3] != 0) then hp won't decrease.
-        // potion[4]: between 0 and 500. if (potion[4] != 0) then bullet_power * 2.
-        // potion[5]: more than 20, which is the exp added when shooting an asteroid.
-        // potion[6]: between 0 and 20, which is the energy needed to shoot.
 };
 
 #endif
