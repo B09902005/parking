@@ -6,9 +6,8 @@
 #include <allegro5/allegro_ttf.h>
 
 #include "utils/log.hpp"
-//#include "engine/mainGame.hpp"
+#include "engine/parking.hpp"
 #include "engine/menu.hpp"
-//#include "engine/end.hpp"
 
 ALLEGRO_DISPLAY *game_display;
 ALLEGRO_FONT *font;
@@ -68,25 +67,25 @@ int main(int argc, char **argv) {
     
     // create scene
     Menu* menu = new Menu; // Press any key to start.
-    //MainGame* mainGame = new MainGame; // (playing...)
+    Parking* parking = new Parking; // parking lot simutation
     while(true){
         // enable scene and start event
         menu->done = false;
         LOG::game_log("start running");
         menu->start_event_loop();
         if(menu->finish)break; // if close window or ctrl+c, finish will be set true
-        /*
+        
         runtime = 0;
-        mainGame->done = false;
-        mainGame->initial();
-        mainGame->start_event_loop();
-        if(mainGame->finish)break; // if close window or ctrl+c, finish will be set true
-         */
+        parking->done = false;
+        parking->initial();
+        parking->start_event_loop();
+        if(parking->finish)break; // if close window or ctrl+c, finish will be set true
+         
     }
     // release resource
     
     delete menu;
-    //delete mainGame;
+    delete parking;
     al_destroy_timer(update_timer);
     al_destroy_event_queue(event_queue);
     al_destroy_display(game_display);

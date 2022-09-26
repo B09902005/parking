@@ -18,7 +18,7 @@ Car::Car(float _x, float _y, std::string ID, std::string path, int w, int h){
 Car::Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img){
     this->x = _x;
     this->y = _y;
-    this->speedX = 0;
+    this->speedX = -0.2;
     this->speedY = 0;
     this->angle = 0;
     this->ID = ID;
@@ -32,9 +32,12 @@ Car::~Car(){
 bool Car::update() {
 	this->x += this->speedX;
 	this->y += this->speedY;
-	//this->speedX = 0;
+	//this->speedX = 3;
 	//this->speedY = 0;
+    LOG::game_log("%f %f %f %f", this->x, this->y, this->speedX, this->speedY);
+    if (this->x <= 0) return false;
 	return true;
+    // if exit then return false
 }
 
 

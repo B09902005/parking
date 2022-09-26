@@ -5,6 +5,7 @@ _OBJS = bin/utils/log.o\
  		bin/utils/imageProcess.o\
  		bin/engine/scene.o\
 		bin/engine/menu.o\
+		bin/engine/parking.o\
 		bin/object/car.o\
 
 ALLEGRO_OPTIONS = -I/usr/include/x86_64-linux-gnu -lallegro_font -lallegro -lallegro_main -lallegro_ttf -lallegro_primitives -lallegro_image
@@ -30,6 +31,10 @@ bin/engine/scene.o: src/engine/scene.cpp
 	g++ $^ -c -o $@ $(CPP_FLAGS) -I$(INCLUDE_PATH) $(ALLEGRO_OPTIONS)
 
 bin/engine/menu.o: src/engine/menu.cpp
+	mkdir -p bin/engine
+	g++ $^ -c -o $@ $(CPP_FLAGS) -I$(INCLUDE_PATH) $(ALLEGRO_OPTIONS)
+
+bin/engine/parking.o: src/engine/parking.cpp
 	mkdir -p bin/engine
 	g++ $^ -c -o $@ $(CPP_FLAGS) -I$(INCLUDE_PATH) $(ALLEGRO_OPTIONS)
 
