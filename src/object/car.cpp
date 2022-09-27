@@ -35,9 +35,13 @@ bool Car::update() {
 	this->x += this->speed * cos(angle * pi / 180);
 	this->y -= this->speed * sin(angle * pi / 180);
     angle += wheel;
-    if (this->x < 20) this->wheel = 1;
+    if (this->x < width / 15.0 + width / 30.0){
+        this->speed = 0.1;
+        if (this->x < width / 15.0) this->wheel = 1;
+        if (wheel == 1) speed = 0.06;
+    }else speed = 0.2;
     if (this->angle >= 270) this->wheel = 0;
-    if ((this->x <= 0) or (this->y <= 0) or (this->y >= space_height)) return false;
+    if ((this->x <= 0) or (this->y <= 0) or (this->y >= height)) return false;
 	return true;
     // if exit then return false
 }
