@@ -24,9 +24,9 @@ class Car{
         ALLEGRO_BITMAP *img;
         float x;
         float y;
-        float speedX;
-        float speedY;
+        float speed;
         float angle;
+        float wheel;
         std::string ID;
 		Car(float _x, float _y, std::string ID, std::string path, int w, int h);
     Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img);

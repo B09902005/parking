@@ -40,7 +40,7 @@ Parking::Parking() {
 	if (!this->font)
 		LOG::game_abort("failed to load font: pirulen.ttf");
 	// load car image
-    this->car_img = ImageProcess::load_bitmap_at_size("./image/car.png", scale, scale * 2);
+    this->car_img = ImageProcess::load_bitmap_at_size("./image/car.png", scale*4, scale*2);
     if (!this->car_img){
         LOG::game_abort("failed to load car image");
 	}
@@ -80,7 +80,8 @@ void Parking::draw(void) {
 
 	// Draw comic.
 	for(auto obj : this->object_list){
-		al_draw_bitmap(obj->img, left_space + obj->x * scale, upper_space + obj->y * scale * 2, 0);
+		al_draw_rotated_bitmap(obj->img, scale * 1, scale * 2, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
+        //LOG::game_log("%f %f %f %f %f %f", obj->x, obj->y, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, obj->x * scale * 1, obj->y * scale * 2);
 	}
 	// render scene
 	al_flip_display();

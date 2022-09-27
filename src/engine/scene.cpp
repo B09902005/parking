@@ -21,6 +21,7 @@ void Scene::start_event_loop(void) {
 			this->finish = true;
 		}else if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
 			LOG::game_log("Key with keycode %d down", event.keyboard.keycode);
+            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE) sleep(10000);
 			key_state[event.keyboard.keycode] = true;
 		} else if (event.type == ALLEGRO_EVENT_KEY_UP) {
 			LOG::game_log("Key with keycode %d up", event.keyboard.keycode);

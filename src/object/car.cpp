@@ -1,14 +1,16 @@
 #include <string>
 #include <iostream>
 #include "car.hpp"
+#include <cmath>
+
+#define pi 3.1415926
 
 // initialize parameter
 Car::Car(float _x, float _y, std::string ID, std::string path, int w, int h){
     this->x = _x;
     this->y = _y;
-    this->speedX = 0;
-    this->speedY = 0;
-    this->angle = 0;
+    this->speed = 0.2;
+    this->angle = 180;
     this->ID = ID;
     this->img = ImageProcess::load_bitmap_at_size(path.c_str(), w, h);
     if (!this->img)
@@ -18,9 +20,9 @@ Car::Car(float _x, float _y, std::string ID, std::string path, int w, int h){
 Car::Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img){
     this->x = _x;
     this->y = _y;
-    this->speedX = -0.2;
-    this->speedY = 0;
-    this->angle = 0;
+    this->speed = 0.2;
+    this->angle = 180;
+    this->wheel = 0;
     this->ID = ID;
     this->img = _img;
 }
@@ -30,12 +32,12 @@ Car::~Car(){
 }
 
 bool Car::update() {
-	this->x += this->speedX;
-	this->y += this->speedY;
-	//this->speedX = 3;
-	//this->speedY = 0;
-    LOG::game_log("%f %f %f %f", this->x, this->y, this->speedX, this->speedY);
-    if (this->x <= 0) return false;
+	this->x += this->speed * cos(angle * pi / 180);
+	this->y -= this->speed * sin(angle * pi / 180);
+    angle += wheel;
+    if (this->x < 20) this->wheel = 1;
+    if (this->angle >= 270) this->wheel = 0;
+    if ((this->x <= 0) or (this->y <= 0) or (this->y >= space_height)) return false;
 	return true;
     // if exit then return false
 }
