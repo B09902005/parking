@@ -40,10 +40,10 @@ int approaching_block(Car *car){
         float distance = car->x - (width/30.0 + i*width/15.0);
         if (car -> angle % 360 == 180){
             if ((distance <= 5) and (distance > 4.8)) return 1;
-            if ((distance <= 3) and (distance > 2.9)) return 2;
+            if ((distance <= 2.9) and (distance > 2.8)) return 2;
         }else if (car -> angle % 360 == 0){
             if ((distance >= -5) and (distance < -4.8)) return 1;
-            if ((distance >= -3) and (distance < -2.9)) return 2;
+            if ((distance >= -2.9) and (distance < -2.8)) return 2;
         }
     }
     std::vector <int> blocky{2,7,12};
@@ -51,10 +51,10 @@ int approaching_block(Car *car){
         float distance = car->y - (height/30.0 + i*height/15.0);
         if (car -> angle % 360 == 90){
             if ((distance <= 5) and (distance > 4.8)) return 1;
-            if ((distance <= 3) and (distance > 2.9)) return 2;
+            if ((distance <= 2.9) and (distance > 2.8)) return 2;
         }else if (car -> angle == 270){
             if ((distance >= -5) and (distance < -4.8)) return 1;
-            if ((distance >= -3) and (distance < -2.9)) return 2;
+            if ((distance >= -2.9) and (distance < -2.8)) return 2;
         }
     }
     return 0;
@@ -66,7 +66,7 @@ bool Car::update() {
     int approaching = approaching_block(this);
     if (approaching == 1) this->speed = 0.1;
     if (approaching == 2){
-        this->speed = 0.06;
+        this->speed = 0.05;
         this->wheel = rand()%3-1;
     }
     angle += wheel;

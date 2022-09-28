@@ -103,7 +103,7 @@ void Parking::draw(void) {
 
 	// Draw comic.
 	for(auto obj : this->object_list){
-		al_draw_rotated_bitmap(obj->img, scale * 1, scale * 2, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
+		al_draw_rotated_bitmap(obj->img, scale * 2, scale * 1, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
         LOG::game_log("%f %f %d", obj->x, obj->y, obj->angle);
 	}
 	// render scene
@@ -152,7 +152,7 @@ void Parking::update(void) {
 	if(rand() % probability_inverse == 0){
 		Car *car;
 		ALLEGRO_BITMAP *tmp = al_clone_bitmap(this->car_img);
-		car = new Car(width, height * 2.2 / 15.0, "ADA-111", tmp);
+		car = new Car(width, height * 2.5 / 15.0, "ADA-111", tmp);
 		this->object_list.push_back(car);
 	}
 
