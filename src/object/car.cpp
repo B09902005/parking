@@ -64,6 +64,8 @@ std::pair<int, int> approaching_block(Car *car){
     return std::make_pair(0,-1);
 }
 
+
+// TODO: better coding style (use brake_timer and wheel_timer)
 bool Car::update() {
 	this->x += this->speed * cos(angle * pi / 180);
 	this->y -= this->speed * sin(angle * pi / 180);
@@ -72,7 +74,7 @@ bool Car::update() {
     if (approaching.first == 2){
         this->speed = 0.05;
         if (this->state == 1){
-            if ((abs(approaching.second - this->cell.first) <= 2) and (this->angle == 180)) this->wheel = 1;
+            if ( (abs(approaching.second - this->cell.first) <= 2) and (this -> angle == 180) ) this -> wheel = 1;
         }
         if (approaching.second == 14) this -> wheel = 1;
     }

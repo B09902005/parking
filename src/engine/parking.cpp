@@ -66,8 +66,8 @@ void Parking::initial(void){
     }
     for (int i=0 ; i<15 ; i++){
         for (int j=0 ; j<15 ; j++){
-            //if (rand()%10 != 3) continue;
-            if ((i!=0) and (i!=7) and (i!=14) and (j!=2) and (j!=7) and (j!=12)) this->empty_cell.push_back(std::make_pair(i,j));
+            if (rand()%10 != 3) continue;
+            if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)) this->empty_cell.push_back(std::make_pair(i,j));
         }
     }
 }
