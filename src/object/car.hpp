@@ -24,9 +24,9 @@ class Car{
         ALLEGRO_BITMAP *img;
         float x;
         float y;
-        float speed;
         int angle;
-        int wheel;
+        int brake_timer; // if > 0 then slow down.
+        int wheel_timer; // if > 0 then turn left, if < 0 then turn right.
         std::string ID;
         std::pair<int, int> cell;
         int state;

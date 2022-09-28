@@ -66,7 +66,7 @@ void Parking::initial(void){
     }
     for (int i=0 ; i<15 ; i++){
         for (int j=0 ; j<15 ; j++){
-            if (rand()%10 != 3) continue;
+            //if (rand()%10 != 3) continue;
             if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)) this->empty_cell.push_back(std::make_pair(i,j));
         }
     }
@@ -138,8 +138,8 @@ bool safe(Car *car, std::list <Car*> object_list){
         float x2 = (*car2) -> x;
         float y2 = (*car2) -> y;
         for (int i=0 ; i<10 ; i++){
-            float x1 = car->x + i * car->speed * cos(car->angle*pi/180);
-            float y1 = car->y - i * car->speed * sin(car->angle*pi/180);
+            float x1 = car->x + i * 0.2 * cos(car->angle*pi/180);
+            float y1 = car->y - i * 0.2 * sin(car->angle*pi/180);
             if ((i == 0) and (x1-x2 < 0.01) and (y1-y2 < 0.01)) break;
             if ((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) < 20) return false;
         }
