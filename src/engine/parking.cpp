@@ -39,8 +39,10 @@ std::string intToChar(int number){
 Parking::Parking() {
 	srand(time(NULL));
 	// load font resource
-	this->font = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 24, 0);
-	if (!this->font)
+	this->font_small = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 16, 0);
+    this->font = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 24, 0);
+    this->font_large = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 30, 0);
+	if ((!this->font_small) or (!this->font) or (!this->font_large))
 		LOG::game_abort("failed to load font: pirulen.ttf");
 	// load car image
     this->car_img = ImageProcess::load_bitmap_at_size("./image/car.png", scale*4, scale*2);
@@ -57,9 +59,16 @@ std::vector <float> left, up;
 
 void Parking::initial(void){
     this->object_list.clear();
+    this->empty_cell.clear();
     for (int i=0 ; i<15 ; i++){
-        if ((i != 2) and (i != 7) and (i != 12) and (i != 15)) up.push_back(upper_space + i * cellheight);
-        if ((i != 0) and (i != 7) and (i != 14)) left.push_back(left_space + (i) * cellwidth);
+        if ((i != 0) and (i != 7) and (i != 14)) up.push_back(upper_space + i * cellheight);
+        if ((i != 2) and (i != 7) and (i != 12)) left.push_back(left_space + (i) * cellwidth);
+    }
+    for (int i=0 ; i<15 ; i++){
+        for (int j=0 ; j<15 ; j++){
+            //if (rand()%10 != 3) continue;
+            if ((i!=0) and (i!=7) and (i!=14) and (j!=2) and (j!=7) and (j!=12)) this->empty_cell.push_back(std::make_pair(i,j));
+        }
     }
 }
 
@@ -72,6 +81,10 @@ void Parking::draw(void) {
 	al_draw_rectangle(left_space, upper_space,
 					left_space + space_width, upper_space + space_height,
 					al_map_rgb(255, 255, 255), 0);
+    
+    al_draw_line(left_space + space_width, upper_space, left_space + space_width, upper_space + cellheight, al_map_rgb(255, 0, 0), 0);
+    
+    al_draw_line(left_space + space_width, upper_space + space_height, left_space + space_width, upper_space + space_height - cellheight, al_map_rgb(255, 0, 0), 0);
     
     // draw parking spaces
     for (unsigned long i=0 ; i<left.size() ; i++){
@@ -89,22 +102,17 @@ void Parking::draw(void) {
 
 	// Render title text.
 	std::string info_message;
-	al_draw_text(this->font, al_map_rgb(255, 255, 255), left_space, 15,
-				ALLEGRO_ALIGN_CENTER, "hello world1");
-	info_message = "HP:" + intToChar(2021);
-	al_draw_text(this->font, al_map_rgb(255, 255, 255), left_space + word_space, 15,
-				ALLEGRO_ALIGN_CENTER, info_message.c_str());
+	al_draw_text(this->font_large, al_map_rgb(255, 0, 0), left_space+space_width, upper_space-40,
+				ALLEGRO_ALIGN_LEFT, "Entrance");
 		
-	al_draw_text(this->font, al_map_rgb(255, 255, 255), left_space, 735,
-				ALLEGRO_ALIGN_CENTER, "hello world2");
-	info_message = "HP:" + intToChar(2022);
-	al_draw_text(this->font, al_map_rgb(255, 255, 255), left_space + word_space, 735,
-				ALLEGRO_ALIGN_CENTER, info_message.c_str());
+	al_draw_text(this->font_large, al_map_rgb(255, 0, 0), left_space+space_width, upper_space+space_height+10,
+				ALLEGRO_ALIGN_LEFT, "Exit");
 
 	// Draw comic.
 	for(auto obj : this->object_list){
 		al_draw_rotated_bitmap(obj->img, scale * 2, scale * 1, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
-        LOG::game_log("%f %f %d", obj->x, obj->y, obj->angle);
+        al_draw_text(this->font_small, al_map_rgb(255,255,255), left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2 + 10, ALLEGRO_ALIGN_CENTER, obj->ID.c_str());
+        LOG::game_log("%s %f %f %d %d", obj->ID.c_str(), obj->x, obj->y, obj->cell.first, obj->cell.second);
 	}
 	// render scene
 	al_flip_display();
@@ -119,14 +127,12 @@ void Parking::destroy(void) {
 
 Parking::~Parking(){
 	// release object resource
-    for(auto obj : this->object_list){
-        //obj->destroy();
-        delete obj;
-    }
+    for (auto obj : this->object_list) delete obj;
 	this->destroy();
 }
 
 // to keep safe distance between cars and cars
+// TODO: make this better. (method: define priority first)
 bool safe(Car *car, std::list <Car*> object_list){
     for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
         float x2 = (*car2) -> x;
@@ -141,6 +147,26 @@ bool safe(Car *car, std::list <Car*> object_list){
     return true;
 }
 
+std::string generate_ID(){
+    std::string ID;
+    for (int i=0 ; i<3 ; i++) ID += rand() % 26 + 'A';
+    ID += '-';
+    for (int i=0 ; i<3 ; i++) ID += rand() % 10 + '0';
+    return ID;
+}
+
+// If the car is at entrance but parking lot is full then return false;
+bool Parking::allo_destination(Car *car){
+    if (car -> cell != std::make_pair(-1,-1)) return true;
+    if (car -> x < width) return true;
+    if (car -> x > width + 0.20) return true;
+    if (car -> state != 1) return true;
+    if (this->empty_cell.size() == 0) return false;
+    car -> cell = this->empty_cell.back();
+    this->empty_cell.pop_back();
+    return true;
+}
+
 void Parking::update(void) {
 	// update game run time
 	runtime++;
@@ -152,13 +178,14 @@ void Parking::update(void) {
 	if(rand() % probability_inverse == 0){
 		Car *car;
 		ALLEGRO_BITMAP *tmp = al_clone_bitmap(this->car_img);
-		car = new Car(width, height * 2.5 / 15.0, "ADA-111", tmp);
+		car = new Car(width * 1.3, height * 0.5 / 15.0, generate_ID(), tmp);
 		this->object_list.push_back(car);
 	}
 
 	// update all object in the scene
 	for(auto obj = this->object_list.begin() ; obj != this->object_list.end() ;){
         if (!safe(*obj, object_list)) obj++;
+        else if (!allo_destination(*obj)) obj++;
         else if((*obj)->update()) obj++;
         else{
 			delete *obj;
