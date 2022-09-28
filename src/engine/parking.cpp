@@ -104,7 +104,7 @@ void Parking::draw(void) {
 	// Draw comic.
 	for(auto obj : this->object_list){
 		al_draw_rotated_bitmap(obj->img, scale * 1, scale * 2, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
-        LOG::game_log("%f %f", obj->x, obj->y);
+        LOG::game_log("%f %f %d", obj->x, obj->y, obj->angle);
 	}
 	// render scene
 	al_flip_display();

@@ -2,6 +2,7 @@
 #include <iostream>
 #include "car.hpp"
 #include <cmath>
+#include <vector>
 
 #define pi 3.1415926
 
@@ -31,19 +32,50 @@ Car::~Car(){
     al_destroy_bitmap(this->img);
 }
 
+int approaching_block(Car *car){
+    // if near a block then return 1 (speed down)
+    // if even nearer then return 2 (turn wheel)
+    std::vector <int> blockx{0,7,14};
+    for (auto i: blockx){
+        float distance = car->x - (width/30.0 + i*width/15.0);
+        if (car -> angle % 360 == 180){
+            if ((distance <= 5) and (distance > 4.8)) return 1;
+            if ((distance <= 3) and (distance > 2.9)) return 2;
+        }else if (car -> angle % 360 == 0){
+            if ((distance >= -5) and (distance < -4.8)) return 1;
+            if ((distance >= -3) and (distance < -2.9)) return 2;
+        }
+    }
+    std::vector <int> blocky{2,7,12};
+    for (auto i: blocky){
+        float distance = car->y - (height/30.0 + i*height/15.0);
+        if (car -> angle % 360 == 90){
+            if ((distance <= 5) and (distance > 4.8)) return 1;
+            if ((distance <= 3) and (distance > 2.9)) return 2;
+        }else if (car -> angle == 270){
+            if ((distance >= -5) and (distance < -4.8)) return 1;
+            if ((distance >= -3) and (distance < -2.9)) return 2;
+        }
+    }
+    return 0;
+}
+
 bool Car::update() {
 	this->x += this->speed * cos(angle * pi / 180);
 	this->y -= this->speed * sin(angle * pi / 180);
+    int approaching = approaching_block(this);
+    if (approaching == 1) this->speed = 0.1;
+    if (approaching == 2){
+        this->speed = 0.06;
+        this->wheel = rand()%3-1;
+    }
     angle += wheel;
-    if (this->x < width / 15.0 + width / 30.0){
-        this->speed = 0.1;
-        if (this->x < width / 15.0) this->wheel = 1;
-        if (wheel == 1) speed = 0.06;
-    }else speed = 0.2;
-    if (this->angle >= 270) this->wheel = 0;
-    if ((this->x <= 0) or (this->y <= 0) or (this->y >= height)) return false;
+    if ((this->angle % 90 == 0) and (speed < 0.07)){
+        this->speed = 0.2;
+        this->wheel = 0;
+    }
+    if ((this->x <= 0) or (this->y <= 0) or (this->y >= height) or (this->x >= width+1)) return false;
 	return true;
-    // if exit then return false
 }
 
 
