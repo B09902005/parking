@@ -135,6 +135,7 @@ Parking::~Parking(){
 // TODO: make this better. (method: define priority first)
 bool safe(Car *car, std::list <Car*> object_list){
     for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
+        if ((*car2) -> state == 2) continue;
         float x2 = (*car2) -> x;
         float y2 = (*car2) -> y;
         for (int i=0 ; i<10 ; i++){

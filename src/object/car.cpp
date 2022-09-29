@@ -68,6 +68,7 @@ std::pair<int, int> approaching_block(Car *car){
 std::pair<int, int> approaching_cell(Car *car){
     // if near the destination then return 1 (speed down)
     // if even nearer then return 2 (left wheel) or 3 (right wheel)
+    // if arrive then reture 4 (stop)
     float distance = car->y - (height/30.0 + (car->cell.second)*height/15.0);
     if (car -> angle % 360 == 90){
         if ((distance <= 5) and (distance > 4.8)) return std::make_pair(1,-1);
@@ -75,12 +76,17 @@ std::pair<int, int> approaching_cell(Car *car){
             if (car->cell.first % 5 < 2) return std::make_pair(2,-1);
             if (car->cell.first % 5 > 2) return std::make_pair(3,-1);
         }
-    }else if (car -> angle == 270){
+    }else if (car -> angle % 360 == 270){
         if ((distance >= -5) and (distance < -4.8)) return std::make_pair(1,-1);
         if ((distance >= -2.9) and (distance < -2.8)){
             if (car->cell.first % 5 > 2) return std::make_pair(2,-1);
             if (car->cell.first % 5 < 2) return std::make_pair(3,-1);
         }
+    }else if ((car -> angle % 360 == 0) or (car -> angle % 360 == 180)){
+        if (abs(distance) > height / 30.0) return std::make_pair(0,-1);
+        distance = abs((width/30.0 + (car->cell.first)*width/15.0) - car->x);
+        if ((distance <= 2) and (distance > 1.8)) return std::make_pair(1,-1);
+        if (distance <= 0.1) return std::make_pair(4,-1);
     }
     return std::make_pair(0,-1);
 }
@@ -93,6 +99,7 @@ bool Car::update() {
         speed = 0.1;
         brake_timer --;
     }
+    if (this -> state == 2) speed = 0;
 	this->x += speed * cos(angle * pi / 180);
 	this->y -= speed * sin(angle * pi / 180);
     if (this -> wheel_timer > 0){
@@ -114,9 +121,10 @@ bool Car::update() {
     }
     
     approaching = approaching_cell(this);
-    if (approaching.first == 1) this -> brake_timer = 40;
+    if (approaching.first == 1) this -> brake_timer = 20;
     if (approaching.first == 2) this -> wheel_timer = 90;
     if (approaching.first == 3) this -> wheel_timer = -90;
+    if (approaching.first == 4) this -> state = 2;
     
     if ((this->x <= 0) or (this->y <= 0) or (this->y >= height) or (this->x >= width*1.4)) return false;
 	return true;
