@@ -47,12 +47,10 @@ std::pair<int, int> approaching_block(Car *car){
         float distance = car->x - (width/30.0 + i*width/15.0);
         if (car -> angle % 360 == 180){
             if ((distance <= 5) and (distance > 4.8)) return std::make_pair(1,i);
-            if ((distance <= 2.9) and (distance > 2.8))
-                return std::make_pair(2,i);
+            if ((distance <= 2.9) and (distance > 2.8)) return std::make_pair(2,i);
         }else if (car -> angle % 360 == 0){
             if ((distance >= -5) and (distance < -4.8)) return std::make_pair(1,i);
-            if ((distance >= -2.9) and (distance < -2.8))
-                return std::make_pair(2,i);
+            if ((distance >= -2.9) and (distance < -2.8)) return std::make_pair(2,i);
         }
     }
     std::vector <int> blocky{0,7,14};
@@ -60,12 +58,10 @@ std::pair<int, int> approaching_block(Car *car){
         float distance = car->y - (height/30.0 + i*height/15.0);
         if (car -> angle % 360 == 90){
             if ((distance <= 5) and (distance > 4.8)) return std::make_pair(1,i);
-            if ((distance <= 2.9) and (distance > 2.8))
-                return std::make_pair(2,i);
+            if ((distance <= 2.9) and (distance > 2.8)) return std::make_pair(2,i);
         }else if (car -> angle == 270){
             if ((distance >= -5) and (distance < -4.8)) return std::make_pair(1,i);
-            if ((distance >= -2.9) and (distance < -2.8))
-                return std::make_pair(2,i);
+            if ((distance >= -2.9) and (distance < -2.8)) return std::make_pair(2,i);
         }
     }
     return std::make_pair(0,-1);
@@ -76,20 +72,15 @@ std::pair<int, int> approaching_cell(Car *car){
     // if even nearer then return 2 (left wheel) or 3 (right wheel)
     // if arrive then reture 4 (stop)
     float distance = car->y - (height/30.0 + (car->cell.second)*height/15.0);
-    int roadnum = car -> cell.first / 5 * 5 + 2;
     if (car -> angle % 360 == 90){
         if ((distance <= 5) and (distance > 4.8)) return std::make_pair(1,-1);
         if ((distance <= 2.9) and (distance > 2.8)){
-            if (car->cell.second < 7) road[roadnum][0] = nullptr;
-            if (car->cell.second > 7) road[roadnum][1] = nullptr;
             if (car->cell.first % 5 < 2) return std::make_pair(2,-1);
             if (car->cell.first % 5 > 2) return std::make_pair(3,-1);
         }
     }else if (car -> angle % 360 == 270){
         if ((distance >= -5) and (distance < -4.8)) return std::make_pair(1,-1);
         if ((distance >= -2.9) and (distance < -2.8)){
-            if (car->cell.second < 7) road[roadnum][0] = nullptr;
-            if (car->cell.second > 7) road[roadnum][1] = nullptr;
             if (car->cell.first % 5 > 2) return std::make_pair(2,-1);
             if (car->cell.first % 5 < 2) return std::make_pair(3,-1);
         }
@@ -108,38 +99,6 @@ bool Car::update() {
     if (this -> state == 2) return true;
     if ((this -> state == 0) and (this -> x > width) and (this -> x < width + 0.2)) return true;
     
-    std::pair <int,int> approaching = approaching_block(this);
-    if (approaching.first == 1) brake_timer = 40;
-    if (approaching.first == 2){
-        if (this->state == 1){
-            if ( (abs(approaching.second - this->cell.first) <= 2) and (this -> angle % 360 == 180) ){
-                this -> wheel_timer = 90;
-                if (road[approaching.second][0] == nullptr) road[approaching.second][0] = this;
-                else if (road[approaching.second][0] != this) this -> safe_distance = false;
-            }
-            if (this -> angle % 360 == 270){
-                int roadnum = this -> cell.first / 5 * 5 + 2;
-                if (approaching.second == 14){
-                    this -> wheel_timer = 90;
-                    road[roadnum][1] = nullptr;
-                }
-                else{
-                    road[roadnum][0] = nullptr;
-                    if (road[roadnum][1] == nullptr) road[roadnum][1] = this;
-                    else if (road[roadnum][1] != this) this -> safe_distance = false;
-                }
-            }
-        }
-    }
-    
-    approaching = approaching_cell(this);
-    if (approaching.first == 1) this -> brake_timer = 20;
-    if (approaching.first == 2) this -> wheel_timer = 90;
-    if (approaching.first == 3) this -> wheel_timer = -90;
-    if (approaching.first == 4) this -> state = 2;
-    
-    if (this -> safe_distance == false) return true;
-    
     float speed = 0.2;
     if (this->wheel_timer != 0) speed = 0.05;
     else if (this->brake_timer > 0){
@@ -157,6 +116,21 @@ bool Car::update() {
         this -> angle --;
         this -> wheel_timer ++;
     }
+    
+    std::pair <int,int> approaching = approaching_block(this);
+    if (approaching.first == 1) brake_timer = 40;
+    if (approaching.first == 2){
+        if (this->state == 1){
+            if ( (abs(approaching.second - this->cell.first) <= 2) and (this -> angle == 180) ) this -> wheel_timer = 90;
+        }
+        if (approaching.second == 14) this -> wheel_timer = 90;
+    }
+    
+    approaching = approaching_cell(this);
+    if (approaching.first == 1) this -> brake_timer = 20;
+    if (approaching.first == 2) this -> wheel_timer = 90;
+    if (approaching.first == 3) this -> wheel_timer = -90;
+    if (approaching.first == 4) this -> state = 2;
     
     if ((this->x <= 0) or (this->y <= 0) or (this->y >= height) or (this->x >= width*1.4)) return false;
 	return true;

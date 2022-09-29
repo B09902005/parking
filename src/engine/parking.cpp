@@ -7,7 +7,6 @@
 #include <utility>
 #include <random>
 #include <time.h>
-#include <vector>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
@@ -52,14 +51,11 @@ Parking::Parking() {
 }
 
 int temp = 0;
-float cellwidth = space_width / 15.00;
-float cellheight = space_height / 15.00;
-std::vector <float> left, up;
 
 
 void Parking::initial(void){
-    this->object_list.clear();
-    this->empty_cell.clear();
+    this -> object_list.clear();
+    this -> empty_cell.clear();
     for (int i=0 ; i<15 ; i++){
         if ((i != 0) and (i != 7) and (i != 14)) up.push_back(upper_space + i * cellheight);
         if ((i != 2) and (i != 7) and (i != 12)) left.push_back(left_space + (i) * cellwidth);
@@ -69,6 +65,10 @@ void Parking::initial(void){
             if (rand()%10 != 3) continue;
             if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)) this->empty_cell.push_back(std::make_pair(i,j));
         }
+    }
+    for (int i=0 ; i<15 ; i++){
+        road[i][0] = nullptr;
+        road[i][1] = nullptr;
     }
 }
 
@@ -145,6 +145,12 @@ bool safe(Car *car, std::list <Car*> object_list){
             if ((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) < 20) return false;
         }
     }
+    /*
+    if (approaching_block(car).first != 2) return true;
+    for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
+        if ((car -> angle % 360 == 180) and (car2 -> state != 2) and (abs(car->x - car2->x) < cellwidth) and (abs(car->x - car2->x) < cellwidth)) return true;
+    }
+     */
     return true;
 }
 

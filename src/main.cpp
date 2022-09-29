@@ -28,6 +28,7 @@ const int space_height = height * scale * 2;
 const int upper_space = (SCREEN_H - space_height) / 2;
 const int left_space = (SCREEN_W - space_width) / 2;
 const int word_space = space_width / 4;
+Car* road[15][2];
  
 
 int runtime = 0;
