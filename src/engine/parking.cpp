@@ -66,7 +66,7 @@ void Parking::initial(void){
     }
     for (int i=0 ; i<15 ; i++){
         for (int j=0 ; j<15 ; j++){
-            //if (rand()%10 != 3) continue;
+            if (rand()%10 != 3) continue;
             if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)) this->empty_cell.push_back(std::make_pair(i,j));
         }
     }
@@ -158,13 +158,11 @@ std::string generate_ID(){
 
 // If the car is at entrance but parking lot is full then return false;
 bool Parking::allo_destination(Car *car){
-    if (car -> cell != std::make_pair(-1,-1)) return true;
-    if (car -> x < width) return true;
-    if (car -> x > width + 0.20) return true;
-    if (car -> state != 1) return true;
+    if (car -> state != 0) return true;
     if (this->empty_cell.size() == 0) return false;
     car -> cell = this->empty_cell.back();
     this->empty_cell.pop_back();
+    car -> state = 1;
     return true;
 }
 
@@ -185,9 +183,9 @@ void Parking::update(void) {
 
 	// update all object in the scene
 	for(auto obj = this->object_list.begin() ; obj != this->object_list.end() ;){
-        if (!safe(*obj, object_list)) obj++;
-        else if (!allo_destination(*obj)) obj++;
-        else if((*obj)->update()) obj++;
+        allo_destination(*obj);
+        (*obj) -> safe_distance = safe(*obj, object_list);
+        if((*obj)->update()) obj++;
         else{
 			delete *obj;
 			obj = this->object_list.erase(obj);

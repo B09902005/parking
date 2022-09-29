@@ -15,7 +15,8 @@ Car::Car(float _x, float _y, std::string ID, std::string path, int w, int h){
     this->wheel_timer = 0;
     this->ID = ID;
     this->cell = std::make_pair(-1,-1);
-    this->state = 1;
+    this->state = 0;
+    this->safe_distance = true;
     this->img = ImageProcess::load_bitmap_at_size(path.c_str(), w, h);
     if (!this->img)
         LOG::game_abort("failed to load image: object");
@@ -29,7 +30,8 @@ Car::Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img){
     this->wheel_timer = 0;
     this->ID = ID;
     this->cell = std::make_pair(-1,-1);
-    this->state = 1;
+    this->state = 0;
+    this->safe_distance = true;
     this->img = _img;
 }
 
@@ -91,17 +93,21 @@ std::pair<int, int> approaching_cell(Car *car){
     return std::make_pair(0,-1);
 }
 
-// TODO: state 1 for y < 3, state 2 all.
+// TODO: state 1 for y < 3. (method: use roads state (bool) )
 bool Car::update() {
+    if (this -> safe_distance == false) return true;
+    if (this -> state == 2) return true;
+    if ((this -> state == 0) and (this -> x > width) and (this -> x < width + 0.2)) return true;
+    
     float speed = 0.2;
     if (this->wheel_timer != 0) speed = 0.05;
     else if (this->brake_timer > 0){
         speed = 0.1;
         brake_timer --;
     }
-    if (this -> state == 2) speed = 0;
 	this->x += speed * cos(angle * pi / 180);
 	this->y -= speed * sin(angle * pi / 180);
+    
     if (this -> wheel_timer > 0){
         this -> angle ++;
         this -> wheel_timer --;
