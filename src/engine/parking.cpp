@@ -63,7 +63,7 @@ void Parking::initial(void){
     for (int i=0 ; i<15 ; i++){
         for (int j=0 ; j<15 ; j++){
             //if (rand()%10 != 3) continue;
-            if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)) this->empty_cell.push_back(std::make_pair(i,j));
+            if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)) this->empty_cell.push_front(std::make_pair(i,j));
         }
     }
     for (int i=0 ; i<15 ; i++){
@@ -168,8 +168,21 @@ std::string generate_ID(){
 bool Parking::allo_destination(Car *car){
     if (car -> state != 0) return true;
     if (this->empty_cell.size() == 0) return false;
-    car -> cell = this->empty_cell.back();
-    this->empty_cell.pop_back();
+    std::pair <int,int> temp1_cell = this->empty_cell.front(), temp2_cell = temp1_cell, anscell = std::make_pair(-1,-1);
+    if (temp1_cell.first % 5 == 1) temp2_cell = std::make_pair(temp1_cell.first-1, temp1_cell.second);
+    if (temp1_cell.first % 5 == 3) temp2_cell = std::make_pair(temp1_cell.first+1, temp1_cell.second);
+    for (auto cell = empty_cell.begin() ; cell != empty_cell.end() ; cell++){
+        if (*cell == temp2_cell){
+            empty_cell.erase(cell);
+            anscell = temp2_cell;
+            break;
+        }
+    }
+    if (anscell == std::make_pair(-1,-1)){
+        empty_cell.pop_front();
+        anscell = temp1_cell;
+    }
+    car -> cell = anscell;
     car -> state = 1;
     return true;
 }
