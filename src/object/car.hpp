@@ -30,7 +30,7 @@ class Car{
         std::string ID;
         std::pair<int, int> cell;
         int state;
-        bool safe_distance;
+        int priority;
 		Car(float _x, float _y, std::string ID, std::string path, int w, int h);
     Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img);
     ~Car();

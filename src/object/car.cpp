@@ -16,7 +16,7 @@ Car::Car(float _x, float _y, std::string ID, std::string path, int w, int h){
     this->ID = ID;
     this->cell = std::make_pair(-1,-1);
     this->state = 0;
-    this->safe_distance = true;
+    this->priority = 1;
     this->img = ImageProcess::load_bitmap_at_size(path.c_str(), w, h);
     if (!this->img)
         LOG::game_abort("failed to load image: object");
@@ -31,7 +31,7 @@ Car::Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img){
     this->ID = ID;
     this->cell = std::make_pair(-1,-1);
     this->state = 0;
-    this->safe_distance = true;
+    this->priority = 1;
     this->img = _img;
 }
 
@@ -72,24 +72,23 @@ std::pair<int, int> approaching_block(Car *car){
 }
 
 std::pair<int, int> approaching_cell(Car *car){
+    // if too over then return -1 (go back)
+    // if still far then return 0 (continue)
     // if near the destination then return 1 (speed down)
     // if even nearer then return 2 (left wheel) or 3 (right wheel)
     // if arrive then reture 4 (stop)
     float distance = car->y - (height/30.0 + (car->cell.second)*height/15.0);
-    int roadnum = car -> cell.first / 5 * 5 + 2;
     if (car -> angle % 360 == 90){
         if ((distance <= 5) and (distance > 4.8)) return std::make_pair(1,-1);
         if ((distance <= 2.9) and (distance > 2.8)){
-            if (car->cell.second < 7) road[roadnum][0] = nullptr;
-            if (car->cell.second > 7) road[roadnum][1] = nullptr;
             if (car->cell.first % 5 < 2) return std::make_pair(2,-1);
             if (car->cell.first % 5 > 2) return std::make_pair(3,-1);
         }
     }else if (car -> angle % 360 == 270){
+        if ((distance >= 3) and (distance < 3.2)) return std::make_pair(-1, -1);
+        if ((distance >= 3.5) and (distance < 3.6)) return std::make_pair(-2, -1);
         if ((distance >= -5) and (distance < -4.8)) return std::make_pair(1,-1);
         if ((distance >= -2.9) and (distance < -2.8)){
-            if (car->cell.second < 7) road[roadnum][0] = nullptr;
-            if (car->cell.second > 7) road[roadnum][1] = nullptr;
             if (car->cell.first % 5 > 2) return std::make_pair(2,-1);
             if (car->cell.first % 5 < 2) return std::make_pair(3,-1);
         }
@@ -103,8 +102,9 @@ std::pair<int, int> approaching_cell(Car *car){
 }
 
 // TODO: state 1 for y < 3. (method: use roads state (bool) )
+// TODO: use priority to prevent from bugs.
 bool Car::update() {
-    if (this -> safe_distance == false) return true;
+    if (this -> priority == 2) return true;
     if (this -> state == 2) return true;
     if ((this -> state == 0) and (this -> x > width) and (this -> x < width + 0.2)) return true;
     
@@ -115,7 +115,7 @@ bool Car::update() {
             if ( (abs(approaching.second - this->cell.first) <= 2) and (this -> angle % 360 == 180) ){
                 this -> wheel_timer = 90;
                 if (road[approaching.second][0] == nullptr) road[approaching.second][0] = this;
-                else if (road[approaching.second][0] != this) this -> safe_distance = false;
+                else if (road[approaching.second][0] != this) this -> priority = 2;
             }
             if (this -> angle % 360 == 270){
                 int roadnum = this -> cell.first / 5 * 5 + 2;
@@ -126,19 +126,40 @@ bool Car::update() {
                 else{
                     road[roadnum][0] = nullptr;
                     if (road[roadnum][1] == nullptr) road[roadnum][1] = this;
-                    else if (road[roadnum][1] != this) this -> safe_distance = false;
+                    else if (road[roadnum][1] != this) this -> priority = 2;
                 }
             }
         }
     }
     
     approaching = approaching_cell(this);
+    int roadnum = this -> cell.first / 5 * 5 + 2;
     if (approaching.first == 1) this -> brake_timer = 20;
-    if (approaching.first == 2) this -> wheel_timer = 90;
-    if (approaching.first == 3) this -> wheel_timer = -90;
-    if (approaching.first == 4) this -> state = 2;
+    if (approaching.first == 2){
+        if (this->cell.second < 7) road[roadnum][0] = nullptr;
+        if (this->cell.second > 7) road[roadnum][1] = nullptr;
+        this -> wheel_timer = 90;
+        this -> priority = 0;
+    }
+    if (approaching.first == 3){
+        if (this->cell.second < 7) road[roadnum][0] = nullptr;
+        if (this->cell.second > 7) road[roadnum][1] = nullptr;
+        this -> wheel_timer = -90;
+        this -> priority = 0;
+    }
+    if (approaching.first == 4){
+        this -> state = 2;
+        this -> brake_timer = 0;
+        this -> wheel_timer = 0;
+        this -> priority = 1;
+    }
+    if (approaching.first == -1) this -> brake_timer += 40;
+    if (approaching.first == -2){
+        this -> angle += 180;
+        this -> priority = 0;
+    }
     
-    if (this -> safe_distance == false) return true;
+    if (this -> priority == 2) return true;
     
     float speed = 0.2;
     if (this->wheel_timer != 0) speed = 0.05;
