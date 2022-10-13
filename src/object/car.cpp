@@ -101,8 +101,6 @@ std::pair<int, int> approaching_cell(Car *car){
     return std::make_pair(0,-1);
 }
 
-// TODO: state 1 for y < 3. (method: use roads state (bool) )
-// TODO: use priority to prevent from bugs.
 bool Car::update() {
     if (this -> priority == 2) return true;
     if (this -> state == 2) return true;
@@ -148,6 +146,7 @@ bool Car::update() {
         this -> priority = 0;
     }
     if (approaching.first == 4){
+        if (this -> state != 2) LOG::game_log("%d %d",this->cell.first, this->cell.second);
         this -> state = 2;
         this -> brake_timer = 0;
         this -> wheel_timer = 0;
