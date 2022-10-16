@@ -15,6 +15,10 @@
 
 #define pi 3.1415926
 
+// TODO: use fixed seed to find bugs
+// TODO: known bugs: road rights for y = 14
+// TODO: last thing is to let inner cars out.
+
 // check collision
 /*
 bool collision(Object *a, Object *b){
@@ -36,7 +40,7 @@ std::string intToChar(int number){
 }
 
 Parking::Parking() {
-	srand(time(NULL));
+	srand(15903359);
 	// load font resource
 	this->font_small = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 16, 0);
     this->font = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 24, 0);
@@ -62,7 +66,6 @@ int temp = 0;
 
 
 void Parking::initial(void){
-    // TODO: new initial (80% cars)
     this -> object_list.clear();
     this -> empty_cell.clear();
     for (int i=0 ; i<15 ; i++){
@@ -133,10 +136,13 @@ void Parking::draw(void) {
 	for(auto obj : this->object_list){
 		al_draw_rotated_bitmap(obj->img, scale * 2, scale * 1, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
         al_draw_text(this->font_small, al_map_rgb(255,255,255), left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2 + 10, ALLEGRO_ALIGN_CENTER, obj->ID.c_str());
-        //LOG::game_log("%s %f %f %d %d %d", obj->ID.c_str(), obj->x, obj->y, obj->cell.first, obj->cell.second, obj->priority);
+        if (obj->state != 2) LOG::game_log("%s %d %d %d %d", obj->ID.c_str(), obj->cell.first, obj->cell.second, obj->priority, obj->state);
 	}
 	// render scene
-    //if (road[12][1] != nullptr) LOG::game_log("%s", road[12][1] -> ID.c_str());
+    for (int i=2 ; i<=12 ; i+=5){
+        if (road[i][0] != nullptr) LOG::game_log("%d 0: %s", i,  road[i][0] -> ID.c_str());
+        if (road[i][1] != nullptr) LOG::game_log("%d 1: %s", i,  road[i][1] -> ID.c_str());
+    }
 	al_flip_display();
 }
 
@@ -155,33 +161,36 @@ Parking::~Parking(){
 
 // to keep safe distance between cars and cars
 int decide_priority(Car *car, std::list <Car*> object_list){
+    // 0 if not moving on road (can ignore)
+    // 1 if normal
+    // 2 if waiting for other cars
     if (car -> priority == 0) return 0;
     for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
-        if ((*car2) -> state == 2) continue;
+        if (((*car2) -> state == 2) or ((*car2) -> state == 3)) continue;
         float x2 = (*car2) -> x;
         float y2 = (*car2) -> y;
         for (int i=0 ; i<10 ; i++){
             float x1 = car->x + i * 0.2 * cos(car->angle*pi/180);
             float y1 = car->y - i * 0.2 * sin(car->angle*pi/180);
             if ((i == 0) and (x1-x2 < 0.01) and (y1-y2 < 0.01)) break;
-            if ((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) < 30) return 2;
+            if ((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) < 30){
+                if (car -> state != 2) LOG::game_log("%s blocked by %s", car -> ID.c_str(), (*car2) -> ID.c_str());
+                return 2;
+            }
         }
     }
-    /*
-    if (approaching_block(car).first != 2) return true;
-    for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
-        if ((car -> angle % 360 == 180) and (car2 -> state != 2) and (abs(car->x - car2->x) < cellwidth) and (abs(car->x - car2->x) < cellwidth)) return true;
-    }
-     */
     return 1;
 }
 
 // If the car is at entrance but parking lot is full then return false;
 std::pair<int, int> Parking::allo_destination(Car *car){
+    if (car -> state >= 3) return car -> cell;
     if (car -> state == 0){
         if (this->empty_cell.size() == 0) return std::make_pair(-1,-1);
         car -> state = 1;
-        return this->empty_cell.front();
+        std::pair<int, int> temp = this->empty_cell.front();
+        this->empty_cell.pop_front();
+        return temp;
     }
     std::pair <int,int> temp1_cell = car -> cell, temp2_cell = temp1_cell;
     if (temp1_cell.first % 5 == 1) temp2_cell = std::make_pair(temp1_cell.first-1, temp1_cell.second);
@@ -189,8 +198,9 @@ std::pair<int, int> Parking::allo_destination(Car *car){
     for (auto cell = empty_cell.begin() ; cell != empty_cell.end() ; cell++){
         if (*cell == temp2_cell){
             empty_cell.erase(cell);
+            empty_cell.push_back(temp1_cell);
             car -> state = 1;
-            car -> priority = 0;
+            if (car -> x <= 1.1 * width) car -> priority = 0;
             if (temp1_cell.first % 5 == 1) car -> angle = 180;
             if (temp1_cell.first % 5 == 3) car -> angle = 0;
             temp1_cell = temp2_cell;
@@ -227,6 +237,14 @@ void Parking::update(void) {
 	for(auto obj = this->object_list.begin() ; obj != this->object_list.end() ;){
         (*obj) -> cell = allo_destination(*obj);
         (*obj) -> priority = decide_priority(*obj, object_list);
+        if  ((*obj) -> state == 3){
+            int x = (*obj) -> cell.first / 5 * 5 + 2, y = 0;
+            if ((*obj) -> cell.second > 7) y = 1;
+            if (road[x][y] == (*obj)){
+                this -> empty_cell.push_back((*obj)->cell);
+                (*obj) -> state = 4;
+            }
+        }
         if((*obj)->update()) obj++;
         else{
 			delete *obj;
