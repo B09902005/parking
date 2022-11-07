@@ -74,7 +74,6 @@ void Parking::initial(void){
     }
     for (int i=0 ; i<15 ; i++){
         for (int j=0 ; j<15 ; j++){
-            //if (rand()%10 != 3) continue;
             if ((i!=2) and (i!=7) and (i!=12) and (j!=0) and (j!=7) and (j!=14)){
                 int temp = rand() % 5;
                 if (temp == 0) this->empty_cell.push_front(std::make_pair(i,j));
@@ -91,9 +90,32 @@ void Parking::initial(void){
         }
     }
     for (int i=0 ; i<15 ; i++){
-        road[i][0] = nullptr;
-        road[i][1] = nullptr;
+        for (int j=0 ; j<4 ; j++) road[i][j] = nullptr;
     }
+    for (int i=0 ; i<10 ; i++){
+        for (auto cell = this->empty_cell.begin() ; cell != this->empty_cell.end() ; cell++){
+            int a = rand() % 2;
+            if (a == 0){
+                auto temp = cell;
+                cell ++;
+                empty_cell.erase(temp);
+                empty_cell.push_back(*temp);
+            }
+        }
+    }
+}
+
+void Parking::log(void){
+    LOG::game_log("runtime %d", runtime);
+    for(auto obj : this->object_list){
+        if (obj->state != 2) LOG::game_log("car %s is going to cell (%2d, %2d), its priority is %d, its state is %d", obj->ID.c_str(), obj->cell.first, obj->cell.second, obj->priority, obj->state);
+    }
+    for (int i=2 ; i<=12 ; i+=5){
+        for (int j=0 ; j<=4 ; j++){
+            if (road[i][j] != nullptr) LOG::game_log("road %2d %d is owned by car %s", i, j, road[i][j] -> ID.c_str());
+        }
+    }
+    return;
 }
 
 void Parking::draw(void) {
@@ -136,13 +158,8 @@ void Parking::draw(void) {
 	for(auto obj : this->object_list){
 		al_draw_rotated_bitmap(obj->img, scale * 2, scale * 1, left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2, -obj->angle * 3.1415926 / 180, 0);
         al_draw_text(this->font_small, al_map_rgb(255,255,255), left_space + obj->x * scale * 1, upper_space + obj->y * scale * 2 + 10, ALLEGRO_ALIGN_CENTER, obj->ID.c_str());
-        if (obj->state != 2) LOG::game_log("%s %d %d %d %d", obj->ID.c_str(), obj->cell.first, obj->cell.second, obj->priority, obj->state);
 	}
 	// render scene
-    for (int i=2 ; i<=12 ; i+=5){
-        if (road[i][0] != nullptr) LOG::game_log("%d 0: %s", i,  road[i][0] -> ID.c_str());
-        if (road[i][1] != nullptr) LOG::game_log("%d 1: %s", i,  road[i][1] -> ID.c_str());
-    }
 	al_flip_display();
 }
 
@@ -165,16 +182,17 @@ int decide_priority(Car *car, std::list <Car*> object_list){
     // 1 if normal
     // 2 if waiting for other cars
     if (car -> priority == 0) return 0;
+    if (car -> angle % 360 == 0) return 1;
+    if (car -> state > 0) return 1;
     for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
-        if (((*car2) -> state == 2) or ((*car2) -> state == 3)) continue;
+        if (((*car2) -> state == 2) or ((*car2) -> state == 3) or ((*car2) == car)) continue;
         float x2 = (*car2) -> x;
         float y2 = (*car2) -> y;
-        for (int i=0 ; i<10 ; i++){
+        for (int i=9 ; i<10 ; i++){
             float x1 = car->x + i * 0.2 * cos(car->angle*pi/180);
             float y1 = car->y - i * 0.2 * sin(car->angle*pi/180);
-            if ((i == 0) and (x1-x2 < 0.01) and (y1-y2 < 0.01)) break;
-            if ((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) < 30){
-                if (car -> state != 2) LOG::game_log("%s blocked by %s", car -> ID.c_str(), (*car2) -> ID.c_str());
+            if ((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) < 20){
+                if ((car -> state != 2) and (runtime % 10 == 0)) LOG::game_log("%s blocked by %s", car -> ID.c_str(), (*car2) -> ID.c_str());
                 return 2;
             }
         }
@@ -185,9 +203,8 @@ int decide_priority(Car *car, std::list <Car*> object_list){
 // If the car is at entrance but parking lot is full then return false;
 std::pair<int, int> Parking::allo_destination(Car *car){
     if (car -> state >= 3) return car -> cell;
-    if (car -> state == 0){
+    if (car -> cell == std::make_pair(-1,-1)){
         if (this->empty_cell.size() == 0) return std::make_pair(-1,-1);
-        car -> state = 1;
         std::pair<int, int> temp = this->empty_cell.front();
         this->empty_cell.pop_front();
         return temp;
@@ -199,12 +216,13 @@ std::pair<int, int> Parking::allo_destination(Car *car){
         if (*cell == temp2_cell){
             empty_cell.erase(cell);
             empty_cell.push_back(temp1_cell);
-            car -> state = 1;
-            if (car -> x <= 1.1 * width) car -> priority = 0;
-            if (temp1_cell.first % 5 == 1) car -> angle = 180;
-            if (temp1_cell.first % 5 == 3) car -> angle = 0;
-            temp1_cell = temp2_cell;
-            break;
+            if (car -> state == 2){
+                car -> state = 1;
+                if (car -> x <= 1.1 * width) car -> priority = 0;
+                if (temp1_cell.first % 5 == 1) car -> angle = 900;
+                if (temp1_cell.first % 5 == 3) car -> angle = 720;
+            }
+            return temp2_cell;
         }
     }
     return temp1_cell;
@@ -223,9 +241,9 @@ void Parking::update(void) {
 	runtime++;
 
 	// create car
-    int probability_inverse = 100;
+    int probability_inverse = 150;
     if (too_much_car(object_list)) probability_inverse = 2147483647;
-    LOG::game_log("%d", runtime);
+    if (runtime % 10 == 0) log();
 	if(rand() % probability_inverse == 0){
 		Car *car;
 		ALLEGRO_BITMAP *tmp = al_clone_bitmap(this->car_img);
@@ -238,8 +256,8 @@ void Parking::update(void) {
         (*obj) -> cell = allo_destination(*obj);
         (*obj) -> priority = decide_priority(*obj, object_list);
         if  ((*obj) -> state == 3){
-            int x = (*obj) -> cell.first / 5 * 5 + 2, y = 0;
-            if ((*obj) -> cell.second > 7) y = 1;
+            int x = (*obj) -> cell.first / 5 * 5 + 2, y = 1;
+            if ((*obj) -> cell.second > 7) y = 2;
             if (road[x][y] == (*obj)){
                 this -> empty_cell.push_back((*obj)->cell);
                 (*obj) -> state = 4;

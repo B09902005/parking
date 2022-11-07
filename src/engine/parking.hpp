@@ -24,6 +24,7 @@ class Parking : public Scene{
 		void destroy(void) override;
 		void update(void) override;
 		void initial(void);
+        void log(void);
         std::pair<int, int> allo_destination(Car*);
 };
 

@@ -4,3 +4,6 @@
 4. 不知道為什麼會被 block
 5. 前車跟後車互 blocked
 6. 理論上直的每一條路都要是一個 conflict zone
+
+Update:
+我把 block 的判定改掉了，希望都修好了。

@@ -5,6 +5,7 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
+#include <iostream>
 
 Scene::~Scene(){
 	
@@ -21,7 +22,10 @@ void Scene::start_event_loop(void) {
 			this->finish = true;
 		}else if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
 			LOG::game_log("Key with keycode %d down", event.keyboard.keycode);
-            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE) sleep(10000);
+            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE){
+                int a;
+                std::cin >> a;
+            }
 			key_state[event.keyboard.keycode] = true;
 		} else if (event.type == ALLEGRO_EVENT_KEY_UP) {
 			LOG::game_log("Key with keycode %d up", event.keyboard.keycode);

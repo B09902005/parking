@@ -38,6 +38,6 @@ class Car{
     
 };
 
-extern Car* road[15][2];
+extern Car* road[15][4];
 
 #endif
