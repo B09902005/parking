@@ -35,9 +35,11 @@ class Car{
     Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img);
     ~Car();
     bool update() ;
+    bool getroad() ;
+    void releaseroad(int leftroad) ;
     
 };
 
-extern Car* road[15][4];
+extern Car* road[15][5];
 
 #endif

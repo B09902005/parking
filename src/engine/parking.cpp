@@ -15,10 +15,6 @@
 
 #define pi 3.1415926
 
-// TODO: use fixed seed to find bugs
-// TODO: known bugs: road rights for y = 14
-// TODO: last thing is to let inner cars out.
-
 // check collision
 /*
 bool collision(Object *a, Object *b){
@@ -40,7 +36,9 @@ std::string intToChar(int number){
 }
 
 Parking::Parking() {
-	srand(15903359);
+	//srand(15903359);
+    //srand(641309883);
+    srand(time(NULL));
 	// load font resource
 	this->font_small = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 16, 0);
     this->font = al_load_ttf_font("./fonts/Pattaya/Pattaya-Regular.ttf", 24, 0);
@@ -184,8 +182,9 @@ int decide_priority(Car *car, std::list <Car*> object_list){
     if (car -> priority == 0) return 0;
     if (car -> angle % 360 == 0) return 1;
     if (car -> state > 0) return 1;
+    
     for (auto car2=object_list.begin() ; car2!=object_list.end() ; car2++){
-        if (((*car2) -> state == 2) or ((*car2) -> state == 3) or ((*car2) == car)) continue;
+        if (((*car2) -> state == 2) or ((*car2) -> state == 3) or ((*car2) -> state == 6) or ((*car2) == car)) continue;
         float x2 = (*car2) -> x;
         float y2 = (*car2) -> y;
         for (int i=9 ; i<10 ; i++){
@@ -214,13 +213,34 @@ std::pair<int, int> Parking::allo_destination(Car *car){
     if (temp1_cell.first % 5 == 3) temp2_cell = std::make_pair(temp1_cell.first+1, temp1_cell.second);
     for (auto cell = empty_cell.begin() ; cell != empty_cell.end() ; cell++){
         if (*cell == temp2_cell){
+            LOG::game_log("%s pop cell %2d %2d and push empty cell %2d %2d state %d", car -> ID.c_str(), temp2_cell.first, temp2_cell.second, temp1_cell.first, temp1_cell.second, car -> state);
             empty_cell.erase(cell);
             empty_cell.push_back(temp1_cell);
             if (car -> state == 2){
-                car -> state = 1;
-                if (car -> x <= 1.1 * width) car -> priority = 0;
-                if (temp1_cell.first % 5 == 1) car -> angle = 900;
-                if (temp1_cell.first % 5 == 3) car -> angle = 720;
+                if (runtime != 1){
+                    car -> state = 5;
+                    car -> cell = temp2_cell;
+                    bool cango = (car -> cell.second % 7 >= 4);
+                    if (cango == false) cango = car -> getroad();
+                    if (cango == true){
+                        if (car -> x <= 1.1 * width) car -> priority = 0;
+                        if (temp1_cell.first % 5 <= 1) car -> angle = 720;
+                        if (temp1_cell.first % 5 >= 3) car -> angle = 900;
+                        if (car -> ID == "XPS-960") LOG::game_log("angle %d %d", temp1_cell.first, car -> angle);
+                    }else car -> state = 2;
+                    Car *car2 = nullptr;
+                    for(auto obj = object_list.begin() ; obj != object_list.end() ; obj++){
+                        if (((*obj)->cell == temp2_cell) and ((*obj) != car)) car2 = *obj;
+                    }
+                    if (cango == true) car2 -> state = 6;
+                    if (cango == false) car2 -> state = 3;
+                    car2 -> releaseroad(0);
+                }else{
+                    car -> state = 1;
+                    if (car -> x <= 1.1 * width) car -> priority = 0;
+                    if (temp1_cell.first % 5 == 1) car -> angle = 900;
+                    if (temp1_cell.first % 5 == 3) car -> angle = 720;
+                }
             }
             return temp2_cell;
         }
@@ -241,7 +261,8 @@ void Parking::update(void) {
 	runtime++;
 
 	// create car
-    int probability_inverse = 150;
+    //int probability_inverse = 150;
+    int probability_inverse = 800;
     if (too_much_car(object_list)) probability_inverse = 2147483647;
     if (runtime % 10 == 0) log();
 	if(rand() % probability_inverse == 0){
@@ -255,11 +276,12 @@ void Parking::update(void) {
 	for(auto obj = this->object_list.begin() ; obj != this->object_list.end() ;){
         (*obj) -> cell = allo_destination(*obj);
         (*obj) -> priority = decide_priority(*obj, object_list);
-        if  ((*obj) -> state == 3){
+        if (((*obj) -> state == 3) or ((*obj) -> state == 6)){
             int x = (*obj) -> cell.first / 5 * 5 + 2, y = 1;
             if ((*obj) -> cell.second > 7) y = 2;
             if (road[x][y] == (*obj)){
-                this -> empty_cell.push_back((*obj)->cell);
+                LOG::game_log("%s push empty cell %2d %2d", (*obj) -> ID.c_str(), (*obj)->cell.first, (*obj)->cell.second);
+                if ((*obj) -> state == 3) this -> empty_cell.push_back((*obj)->cell);
                 (*obj) -> state = 4;
             }
         }

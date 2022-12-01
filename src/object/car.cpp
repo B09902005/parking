@@ -100,52 +100,86 @@ std::pair<int, int> approaching_cell(Car *car){
     return std::make_pair(0,-1);
 }
 
-bool getroad(Car *car){
+bool Car::getroad(){
     int a = -1, b = -1;
-    if ((car -> y < height / 15.0) and (car -> angle % 360 == 180)){
-        if (car -> wheel_timer == 0){
-            if (car -> x < width * 2.0 / 3.0) a = 2;
-            else if (car -> x < width) a = 7;
+    if ((this -> y < height / 15.0) and (this -> angle % 360 == 180)){
+        if (this -> wheel_timer == 0){
+            if (this -> x < width * 2.0 / 3.0) a = 2;
+            else if (this -> x < width) a = 7;
             else a = 12;
             b = 0;
         }else{
-            if (car -> x < width / 3.0) a = 2;
-            else if (car -> x < width * 2.0 / 3.0) a = 7;
+            if (this -> x < width / 3.0) a = 2;
+            else if (this -> x < width * 2.0 / 3.0) a = 7;
             else a = 12;
             b = 1;
         }
-    }else{
-        if (car -> x < width / 3.0) a = 2;
-        else if (car -> x < width * 2.0 / 3.0) a = 7;
+    }else if ((abs(this -> y - height / 2.0) < 0.2) and (this -> angle % 360 == 180)){
+        if (this -> x < width / 3.0) a = 2;
+        else if (this -> x < width * 2.0 / 3.0) a = 7;
         else a = 12;
-        if ((car -> angle % 360 == 180) or (car -> angle % 360 == 0)){
-            if (car -> y < height / 2.0) b = 1;
-            else if (car -> y < height * 14.0 / 15.0) b = 2;
+        if (this -> cell.second < 7) b = 1;
+        if (this -> cell.second > 7) b = 2;
+    }else{
+        if (this -> x < width / 3.0) a = 2;
+        else if (this -> x < width * 2.0 / 3.0) a = 7;
+        else a = 12;
+        if ((this -> angle % 360 == 180) or (this -> angle % 360 == 0)){
+            if (this -> y < height / 2.0) b = 1;
+            else if (this -> y < height * 14.0 / 15.0) b = 2;
             else b = 3;
         }else{
-            if (car -> y < height / 2.0) b = 2;
+            if (this -> y < height / 2.0) b = 2;
             else b = 3;
         }
     }
-    if (road[a][b] == nullptr) road[a][b] = car;
-    else if (road[a][b] != car) car -> priority = 2;
-    return (road[a][b] == car);
+    if (this -> state == 5){
+        if (this -> cell.second < 7) b = 1;
+        if (this -> cell.second > 7) b = 2;
+        if ((abs(this -> y - height / 2.0) > height / 30.0) and (this -> angle % 180 == 0)){
+            bool ans = (road[a][4] == nullptr);
+            ans &= ((road[a][b] == nullptr) or (road[a][b] -> cell == this -> cell));
+            if (ans == true){
+                road[a][4] = this;
+                road[a][b] = this;
+            }else this -> priority = 2;
+            return ans;
+        }
+        if (road[a][b] == nullptr) road[a][b] = this;
+        if (road[a][b] -> cell != this -> cell) road[a][b] = this;
+    }
+    if (road[a][b] == nullptr) road[a][b] = this;
+    else if (road[a][b] != this) this -> priority = 2;
+    return (road[a][b] == this);
 }
 
-void releaseroad(Car *car, int leftroad){
+void Car::releaseroad(int leftroad){
+    if ((this -> state == 5) and (this -> angle % 180 == 90)){
+        if (road[2][1] == this) road[2][1] = nullptr;
+        if (road[7][1] == this) road[7][1] = nullptr;
+        if (road[12][1] == this) road[12][1] = nullptr;
+        if (road[2][2] == this) road[2][2] = nullptr;
+        if (road[7][2] == this) road[7][2] = nullptr;
+        if (road[12][2] == this) road[12][2] = nullptr;
+        return;
+    }
     int count = 0;
     for (int i=12 ; i>=2 ; i-=5){
         for (int j=3 ; j>=1 ; j--){
-            if (road[i][j] == car){
+            if (road[i][j] == this){
                 count ++;
                 if (count > leftroad) road[i][j] = nullptr;
             }
         }
     }
     for (int i=2 ; i<=12 ; i+=5){
-        if (road[i][0] == car){
+        if (road[i][0] == this){
             count ++;
             if (count > leftroad) road[i][0] = nullptr;
+        }
+        if (road[i][4] == this){
+            count ++;
+            if (count > leftroad) road[i][4] = nullptr;
         }
     }
     return;
@@ -153,50 +187,98 @@ void releaseroad(Car *car, int leftroad){
 
 bool Car::update() {
     if (this -> priority == 2) return true; // waiting car in the front.
+    if ((this -> state == 0) and (this -> x > width) and (this -> x < width + 0.2)){
+        if (this -> cell != std::make_pair(-1,-1)){
+            if (getroad() == true) this -> state = 1;
+        }else return true;
+    }
     if (this -> state == 2){ // stopping at a cell.
-        int probability_inverse = 20000;
+        //int probability_inverse = 20000;
+        int probability_inverse = 80000;
         if (rand() % probability_inverse == 0){
             this -> state = 3;
             this -> priority = 1;
+            this -> brake_timer = 100;
             if (this -> cell.first % 5 < 2) this -> angle = 720;
             if (this -> cell.first % 5 > 2) this -> angle = 900;
         }
         return true;
     }
-    if (state == 3){
-        getroad(this);
+    if ((this -> state == 3) or (this -> state == 6)){
+        getroad();
         return true;
     }
-    if ((this -> state == 0) and (this -> x > width) and (this -> x < width + 0.2)){
-        if (this -> cell != std::make_pair(-1,-1)){
-            if (getroad(this) == true) this -> state = 1;
-        }else return true;
+    if ((this -> state == 4) and (this -> x > width) and (this -> x < width + 0.2)) releaseroad(0);
+    if (this -> state == 5){
+        if ((this -> cell.second <= 10) and (this -> cell.second >= 8) and (this -> angle % 360 == 270) and (abs(this -> y - (this -> cell.second * 2 + 1) * height / 30.0) >= 6) ){
+            this -> angle += 180;
+        }
+        bool cango;
+        if (this -> cell.second % 7 >= 4) cango = (abs(this -> y - (this -> cell.second * 2 + 1) * height / 30.0) >= 6);
+        if (this -> cell.second % 7 <= 3) cango = ((this -> angle % 360 == 0) and (abs(this -> x - ((this -> cell.first / 5 * 5 + 4) * 2 + 1) * width / 30.0) <= 0.2));
+        if (cango == true){
+            if (getroad() == true){
+                this -> state = 1;
+                this -> angle += 180;
+            }
+        }
     }
-    if ((this -> state >= 3) and (this -> x > width) and (this -> x < width + 0.2)) releaseroad(this, 0);
     
     std::pair <int,int> approaching = approaching_block(this);
     if (approaching.first == 1) brake_timer = 40; // slow down if near a block.
     if (approaching.first == 2){ // decide direction if near a block.
         if (this -> angle % 360 == 180){
-            if (abs(approaching.second - this->cell.first) <= 2){
-                if ((this -> state >= 3) and (this -> cell.second % 7 >= 4)) this -> wheel_timer = -90;
-                else this -> wheel_timer = 90;
+            if (this -> state == 5){
+                if ((approaching.second != 0) and (approaching.second != 14)){
+                    if (this -> cell.second % 7 <= 3) this -> wheel_timer = 90;
+                    if (this -> cell.second % 7 >= 4) this -> wheel_timer = -90;
+                }
+            }else{
+                if (abs(approaching.second - this->cell.first) <= 2){
+                    if (abs(this->y - height / 2) <= 0.2){
+                        if (this -> cell.second < 7) this -> wheel_timer = -90;
+                        else this -> wheel_timer = 90;
+                    }
+                    else if ((this -> state >= 3) and (this -> cell.second % 7 >= 4)) this -> wheel_timer = -90;
+                    else this -> wheel_timer = 90;
+                }
+                if (getroad() == true) releaseroad(1);
             }
-            if (getroad(this) == true) releaseroad(this, 1);
         }else if (this -> angle % 360 == 0){
-            if (this -> y < height / 15.0 * 14.0){
-                if (this -> cell.second % 7 >= 4) this -> wheel_timer = 90;
-                else this -> wheel_timer = -90;
+            if (this -> state == 5){
+                if ((approaching.second != 0) and (approaching.second != 14)){
+                    if (this -> cell.second % 7 <= 3) this -> wheel_timer = -90;
+                    if (this -> cell.second % 7 >= 4) this -> wheel_timer = 90;
+                }
+            }else{
+                if (this -> y < height / 15.0 * 14.0){
+                    if (this -> cell.second % 7 >= 4) this -> wheel_timer = 90;
+                    else this -> wheel_timer = -90;
+                }
+                if (getroad() == true) releaseroad(1);
             }
-            if (getroad(this) == true) releaseroad(this, 1);
         }else if (this -> angle % 360 == 270){
-            if (approaching.second == 14) this -> wheel_timer = 90;
-            if (getroad(this) == true) releaseroad(this, 1);
+            if (this -> state == 5){
+                if (this -> cell.second <= 3){
+                    this -> wheel_timer = 90;
+                    releaseroad(1);
+                }
+            }else{
+                if (approaching.second == 14) this -> wheel_timer = 90;
+                if (getroad() == true) releaseroad(1);
+            }
+        }else if (this -> angle % 360 == 90){
+            if (this -> state == 5){
+                if ((this -> cell.second <= 10) and (this -> cell.second >= 8) ){
+                    this -> wheel_timer = -90;
+                    releaseroad(1);
+                }
+            }
         }
     }
     
     approaching = approaching_cell(this);
-    if (approaching.first == 1) this -> brake_timer = 20; // slow down if near a cell.
+    if (approaching.first == 1) this -> brake_timer = 30; // slow down if near a cell.
     if (approaching.first == 2){ // turn right
         this -> wheel_timer = 90;
         this -> priority = 0;
@@ -206,7 +288,7 @@ bool Car::update() {
         this -> priority = 0;
     }
     if (approaching.first == 4){ // stop
-        releaseroad(this, 0);
+        releaseroad(0);
         this -> state = 2;
         this -> brake_timer = 0;
         this -> wheel_timer = 0;
@@ -225,7 +307,7 @@ bool Car::update() {
     float speed = 0.15;
     if (this->wheel_timer != 0) speed = 0.05;
     else if (this->brake_timer > 0){
-        speed = 0.10;
+        speed = 0.08;
         brake_timer --;
     }
 	this->x += speed * cos(angle * pi / 180);
@@ -240,7 +322,8 @@ bool Car::update() {
         this -> wheel_timer ++;
     }
     
-    if ((this->x <= 0) or (this->y <= 0) or (this->y >= height) or (this->x >= width*1.4)) return false;
+    //if ((this->x <= 0) or (this->y <= 0) or (this->y >= height) or (this->x >= width*1.4)) return false;
+    if (this -> x >= width * 1.4) return false;
 	return true;
 }
 
