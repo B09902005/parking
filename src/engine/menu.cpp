@@ -22,7 +22,7 @@ void Menu::draw(void){
 					left_space + space_width, upper_space + space_height,
 					al_map_rgb(255, 255, 255), 0);
 	// draw info message
-	char intro_message[] ="This is the final project of B09902005.";
+	char intro_message[] ="This is the final project of B09902005 and B09901133.";
     char about_message[] ="This project simulates a better parking lot for intelligence vehicles.";
 	char press_message[] ="Press any key to play";
 	al_draw_text(this->font_large, al_map_rgb(255, 255, 255), SCREEN_W / 2, 250,

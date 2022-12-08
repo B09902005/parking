@@ -33,20 +33,25 @@ extern int runtime;
 class Scene{
 	public:
 		virtual ~Scene();
-		bool done = false;
-		bool finish = false;
+
 		/* Declare function prototypes. */
 		// Initialize variables and resources.
 		// Allows the game to perform any initialization it needs before
 		// starting to run.
+		bool done = false;
+		bool finish = false;
+
 		// Draw to display.
 		// This is called when the game should draw itself.
 		virtual void draw(void) = 0;
+
 		// Release resources.
 		// Free the pointers we allocated.
 		virtual void destroy(void) = 0;
+
 		// start event loop check draw and update every frame
 		void start_event_loop(void);
+		
 		// update the scene
 		virtual void update(void) = 0;
 };

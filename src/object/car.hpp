@@ -28,10 +28,23 @@ class Car{
         int brake_timer; // if > 0 then slow down.
         int wheel_timer; // if > 0 then turn left, if < 0 then turn right.
         std::string ID;
-        std::pair<int, int> cell;
+        std::pair<int, int> cell; // the cell it wants to park to
         int state;
+        /*
+        0 if not enter the parking lot
+        1 enter the parking lot, but didn't get to its cell
+        2 is in parking cell
+        3 ready to leave parking cell, but not leaving
+        4 leaves parking cell
+        5 是前面的車，後面的車要出來，所以要讓
+        */
         int priority;
-		Car(float _x, float _y, std::string ID, std::string path, int w, int h);
+        /*
+        0 if not moving on road (can ignore)
+        1 if normal
+        2 if waiting for other cars
+		*/
+        Car(float _x, float _y, std::string ID, std::string path, int w, int h);
     Car(float _x, float _y, std::string ID, ALLEGRO_BITMAP *_img);
     ~Car();
     bool update() ;
