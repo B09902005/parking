@@ -1,10 +1,10 @@
 ## Introduction:  
   * This is the final project of B09902005 and B09901133.
   * This project simulates a better parking lot for intelligence vehicles, and it can run on MacOS and Linux.
-  * To see the details of this project, you can check **Intelligent_Vehicle_Final_Report.pdf** for more information.
+  * To see the details of this project, you can check https://github.com/B09902005/parking/blob/master/Intelligent_Vehicle_Final_Report.pdf for more information.
 
 ## Demo:  
-  You can check https://www.youtube.com/watch?v=Z2qO128PWHM for demo.
+  You can check https://youtu.be/PcYCgYxBmFA and https://www.youtube.com/watch?v=Z2qO128PWHM for demo.
 
 ## How to run the simulation:  
 1. First, you need to download the environment:
